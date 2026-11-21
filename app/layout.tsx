@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { AuthSessionProvider } from "@/components/session-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,14 +29,22 @@ export const metadata: Metadata = {
     "Find standout moments, create captions, and prepare vertical clips in one streamlined creator workflow.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
       className={`${inter.variable} ${plusJakarta.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col selection:bg-ink selection:text-white">
-        {children}
+      <body
+        className="min-h-full flex flex-col selection:bg-ink selection:text-white"
+        suppressHydrationWarning
+      >
+        <AuthSessionProvider>{children}</AuthSessionProvider>
       </body>
     </html>
   );

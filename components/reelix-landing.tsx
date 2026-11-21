@@ -7,6 +7,8 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 import { CREATOR_TOOLS, REELS, REEL_DURATION, LOADING_DURATION } from "@/lib/data";
 import type { Reel } from "@/lib/data";
 import { ToolIcon } from "@/components/tool-icons";
@@ -53,7 +55,7 @@ function Toast({ msg }: { msg: string | null }) {
 //  MODAL SYSTEM
 // ============================================================
 
-type ModalType = "pricing" | "demo" | "auth" | "tool" | null;
+type ModalType = "pricing" | "demo" | "tool" | null;
 
 function ModalRoot({
   isOpen,
@@ -94,7 +96,7 @@ function ModalRoot({
           type="button"
           onClick={onClose}
           aria-label="Close modal"
-          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-ink transition-colors z-20"
+          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-ink transition-colors z-20 cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -175,7 +177,7 @@ function PricingModal({ onClose, toast }: { onClose: () => void; toast: (msg: st
               <li className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Starter templates</li>
             </ul>
           </div>
-          <button type="button" onClick={() => handleSelectPlan("Starter")} className="w-full py-2.5 rounded-full border border-line bg-white text-ink text-xs font-semibold hover:border-ink transition-colors">
+          <button type="button" onClick={() => handleSelectPlan("Starter")} className="w-full py-2.5 rounded-full border border-line bg-white text-ink text-xs font-semibold hover:border-ink transition-colors cursor-pointer">
             Get started
           </button>
         </div>
@@ -199,7 +201,7 @@ function PricingModal({ onClose, toast }: { onClose: () => void; toast: (msg: st
               <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Pro Templates &amp; Brand Kits</li>
             </ul>
           </div>
-          <button type="button" onClick={() => handleSelectPlan("Creator Pro")} className="w-full py-2.5 rounded-full bg-white text-ink text-xs font-semibold hover:bg-neutral-200 transition-colors relative z-10">
+          <button type="button" onClick={() => handleSelectPlan("Creator Pro")} className="w-full py-2.5 rounded-full bg-white text-ink text-xs font-semibold hover:bg-neutral-200 transition-colors relative z-10 cursor-pointer">
             Get started →
           </button>
         </div>
@@ -220,7 +222,7 @@ function PricingModal({ onClose, toast }: { onClose: () => void; toast: (msg: st
               <li className="flex items-center gap-2"><span className="text-emerald-600">✓</span> API access &amp; auto-scheduling</li>
             </ul>
           </div>
-          <button type="button" onClick={() => handleSelectPlan("Studio")} className="w-full py-2.5 rounded-full border border-ink text-ink text-xs font-semibold hover:bg-ink hover:text-white transition-colors">
+          <button type="button" onClick={() => handleSelectPlan("Studio")} className="w-full py-2.5 rounded-full border border-ink text-ink text-xs font-semibold hover:bg-ink hover:text-white transition-colors cursor-pointer">
             Get started
           </button>
         </div>
@@ -231,146 +233,10 @@ function PricingModal({ onClose, toast }: { onClose: () => void; toast: (msg: st
 }
 
 // ============================================================
-//  AUTH MODAL
-// ============================================================
-
-function AuthModal({ onClose, toast }: { onClose: () => void; toast: (msg: string) => void }) {
-  const [tab, setTab] = useState<"login" | "signup">("signup");
-  const [showPassword, setShowPassword] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const isLogin = tab === "login";
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const msg = isLogin
-      ? "Login is not yet connected — this is a UI prototype."
-      : "Sign-up is not yet connected — this is a UI prototype.";
-    setFeedback(msg);
-    setTimeout(() => {
-      onClose();
-      toast(isLogin ? "Login flow previewed" : "Sign-up flow previewed");
-    }, 1500);
-  };
-
-  const handleQuickAuth = (provider: string) => {
-    setFeedback(`${provider} auth is not yet connected — this is a UI prototype.`);
-    setTimeout(() => {
-      onClose();
-      toast(`${provider} auth flow previewed`);
-    }, 1200);
-  };
-
-  return (
-    <div className="space-y-5">
-      <div className="inline-flex p-1 rounded-full bg-canvas border border-line">
-        <button
-          type="button"
-          onClick={() => { setTab("login"); setFeedback(null); }}
-          className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${isLogin ? "bg-ink text-white shadow-xs" : "text-muted hover:text-ink"}`}
-        >
-          Log in
-        </button>
-        <button
-          type="button"
-          onClick={() => { setTab("signup"); setFeedback(null); }}
-          className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${!isLogin ? "bg-ink text-white shadow-xs" : "text-muted hover:text-ink"}`}
-        >
-          Sign up
-        </button>
-      </div>
-
-      <div>
-        <h2 className="font-[family-name:var(--font-display)] font-bold text-2xl tracking-tight text-ink">
-          {isLogin ? "Welcome back to Reelix" : "Create your studio account"}
-        </h2>
-        <p className="text-xs text-muted mt-1">
-          {isLogin ? "Pick up right where you left off." : "Start clipping, captioning, and previewing shorts."}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2.5">
-        <button type="button" onClick={() => handleQuickAuth("Google")} className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-line bg-white hover:bg-canvas text-xs font-semibold text-ink transition-colors">
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.54 5.54 0 01-2.4 3.63v3h3.88c2.27-2.09 3.54-5.17 3.54-8.87z" />
-            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3c-1.08.72-2.45 1.15-4.05 1.15-3.12 0-5.77-2.11-6.72-4.96H1.29v3.09A12 12 0 0012 24z" />
-            <path fill="#FBBC05" d="M5.28 14.28A7.2 7.2 0 014.9 12c0-.79.14-1.56.38-2.28V6.63H1.29A12 12 0 000 12c0 1.94.46 3.77 1.29 5.37l3.99-3.09z" />
-            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0A12 12 0 001.29 6.63l3.99 3.09c.95-2.85 3.6-4.97 6.72-4.97z" />
-          </svg>
-          <span>Google</span>
-        </button>
-        <button type="button" onClick={() => handleQuickAuth("Apple")} className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-line bg-white hover:bg-canvas text-xs font-semibold text-ink transition-colors">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z" />
-          </svg>
-          <span>Apple</span>
-        </button>
-      </div>
-
-      <div className="flex items-center gap-3 text-[11px] font-mono text-muted">
-        <span className="flex-1 h-[1px] bg-line" />
-        <span>OR EMAIL</span>
-        <span className="flex-1 h-[1px] bg-line" />
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3.5">
-        {!isLogin && (
-          <div>
-            <label className="block text-[11.5px] font-medium text-muted mb-1">Full Name</label>
-            <input type="text" required placeholder="Alex Rivera" className="w-full px-3.5 py-2.5 rounded-xl border border-line bg-canvas text-sm text-ink focus:outline-none focus:border-ink focus:ring-2 focus:ring-ink/10 transition-all" />
-          </div>
-        )}
-        <div>
-          <label className="block text-[11.5px] font-medium text-muted mb-1">Email Address</label>
-          <input type="email" required placeholder="creator@studio.com" className="w-full px-3.5 py-2.5 rounded-xl border border-line bg-canvas text-sm text-ink focus:outline-none focus:border-ink focus:ring-2 focus:ring-ink/10 transition-all" />
-        </div>
-        <div>
-          <label className="block text-[11.5px] font-medium text-muted mb-1">Password</label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              required
-              placeholder="••••••••"
-              className="w-full px-3.5 py-2.5 pr-11 rounded-xl border border-line bg-canvas text-sm text-ink focus:outline-none focus:border-ink focus:ring-2 focus:ring-ink/10 transition-all"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label="Show or hide password"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                {showPassword ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12c1.292 4.338 5.31 7.5 10.066 7.5.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                ) : (
-                  <>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </>
-                )}
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {feedback && (
-          <div className="px-3.5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
-            {feedback}
-          </div>
-        )}
-
-        <button type="submit" className="btn-sheen w-full py-3 rounded-full bg-ink text-white text-sm font-semibold hover:bg-neutral-800 transition-all shadow-md">
-          {isLogin ? "Log in to Reelix →" : "Create free account →"}
-        </button>
-      </form>
-    </div>
-  );
-}
-
-// ============================================================
 //  DEMO MODAL
 // ============================================================
 
-function DemoModal({ onClose, onOpenAuth }: { onClose: () => void; onOpenAuth: () => void }) {
+function DemoModal({ onClose }: { onClose: () => void }) {
   const [paused, setPaused] = useState(false);
   return (
     <div className="space-y-5">
@@ -397,7 +263,7 @@ function DemoModal({ onClose, onOpenAuth }: { onClose: () => void; onOpenAuth: (
             <button
               type="button"
               onClick={() => setPaused(!paused)}
-              className="w-14 h-14 rounded-full bg-white text-ink flex items-center justify-center shadow-xl hover:scale-105 transition-transform"
+              className="w-14 h-14 rounded-full bg-white text-ink flex items-center justify-center shadow-xl hover:scale-105 transition-transform cursor-pointer"
             >
               {paused ? (
                 <svg className="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5.14v14l11-7-11-7z" /></svg>
@@ -432,10 +298,16 @@ function DemoModal({ onClose, onOpenAuth }: { onClose: () => void; onOpenAuth: (
       <div className="flex items-center justify-between gap-3">
         <span className="font-mono text-[11px] text-muted">Sample data • Runs in browser</span>
         <div className="flex items-center gap-2.5">
-          <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-full border border-line text-xs font-medium text-muted hover:text-ink">Close</button>
-          <button type="button" onClick={() => { onClose(); onOpenAuth(); }} className="btn-sheen px-5 py-2.5 rounded-full bg-ink text-white text-xs font-semibold hover:bg-neutral-800">
-            Start creating →
+          <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-full border border-line text-xs font-medium text-muted hover:text-ink cursor-pointer">
+            Close
           </button>
+          <Link
+            href="/studio?demo=1"
+            onClick={onClose}
+            className="btn-sheen px-5 py-2.5 rounded-full bg-ink text-white text-xs font-semibold hover:bg-neutral-800"
+          >
+            Open Interactive Demo Studio →
+          </Link>
         </div>
       </div>
     </div>
@@ -449,12 +321,10 @@ function DemoModal({ onClose, onOpenAuth }: { onClose: () => void; onOpenAuth: (
 function ToolModal({
   toolKey,
   onClose,
-  onOpenAuth,
   toast,
 }: {
   toolKey: string;
   onClose: () => void;
-  onOpenAuth: () => void;
   toast: (msg: string) => void;
 }) {
   const tool = CREATOR_TOOLS.find((t) => t.key === toolKey);
@@ -482,10 +352,16 @@ function ToolModal({
       <ToolInteractiveWidget toolKey={toolKey} toast={toast} />
 
       <div className="pt-1 flex items-center justify-end gap-2.5">
-        <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-full border border-line text-xs font-medium text-muted hover:text-ink">Close</button>
-        <button type="button" onClick={() => { onClose(); onOpenAuth(); }} className="btn-sheen px-5 py-2.5 rounded-full bg-ink text-white text-xs font-semibold hover:bg-neutral-800 transition-colors">
-          Try this tool free →
+        <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-full border border-line text-xs font-medium text-muted hover:text-ink cursor-pointer">
+          Close
         </button>
+        <Link
+          href="/login?mode=signup"
+          onClick={onClose}
+          className="btn-sheen px-5 py-2.5 rounded-full bg-ink text-white text-xs font-semibold hover:bg-neutral-800 transition-colors"
+        >
+          Try this tool free →
+        </Link>
       </div>
     </div>
   );
@@ -514,9 +390,9 @@ function ToolInteractiveWidget({ toolKey, toast }: { toolKey: string; toast: (ms
           {captionContent}
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setCaptionStyle("swiss")} className={`px-3 py-1 rounded-full text-[11px] font-medium ${captionStyle === "swiss" ? "bg-white/25" : "bg-white/15 hover:bg-white/25"}`}>Swiss Clean</button>
-          <button type="button" onClick={() => setCaptionStyle("kinetic")} className={`px-3 py-1 rounded-full text-[11px] font-medium ${captionStyle === "kinetic" ? "bg-white/25" : "bg-white/15 hover:bg-white/25"}`}>Kinetic Pop</button>
-          <button type="button" onClick={() => setCaptionStyle("mono")} className={`px-3 py-1 rounded-full text-[11px] font-medium ${captionStyle === "mono" ? "bg-white/25" : "bg-white/15 hover:bg-white/25"}`}>Studio Mono</button>
+          <button type="button" onClick={() => setCaptionStyle("swiss")} className={`px-3 py-1 rounded-full text-[11px] font-medium cursor-pointer ${captionStyle === "swiss" ? "bg-white/25" : "bg-white/15 hover:bg-white/25"}`}>Swiss Clean</button>
+          <button type="button" onClick={() => setCaptionStyle("kinetic")} className={`px-3 py-1 rounded-full text-[11px] font-medium cursor-pointer ${captionStyle === "kinetic" ? "bg-white/25" : "bg-white/15 hover:bg-white/25"}`}>Kinetic Pop</button>
+          <button type="button" onClick={() => setCaptionStyle("mono")} className={`px-3 py-1 rounded-full text-[11px] font-medium cursor-pointer ${captionStyle === "mono" ? "bg-white/25" : "bg-white/15 hover:bg-white/25"}`}>Studio Mono</button>
         </div>
       </div>
     );
@@ -554,8 +430,8 @@ function ToolInteractiveWidget({ toolKey, toast }: { toolKey: string; toast: (ms
           ))}
         </div>
         <div className="flex gap-2">
-          <button type="button" onClick={() => setBpmLabel("128 BPM • SNAPPED")} className="px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]">128 BPM Drop</button>
-          <button type="button" onClick={() => setBpmLabel("92 BPM • LO-FI")} className="px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]">92 BPM Lo-Fi</button>
+          <button type="button" onClick={() => setBpmLabel("128 BPM • SNAPPED")} className="px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px] cursor-pointer">128 BPM Drop</button>
+          <button type="button" onClick={() => setBpmLabel("92 BPM • LO-FI")} className="px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px] cursor-pointer">92 BPM Lo-Fi</button>
         </div>
       </div>
     );
@@ -591,9 +467,9 @@ function ToolInteractiveWidget({ toolKey, toast }: { toolKey: string; toast: (ms
           <span className="text-ink font-semibold">{reframeLabel}</span>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setReframeLabel("9:16 VERTICAL")} className={`flex-1 py-2 rounded-xl bg-white border ${reframeLabel === "9:16 VERTICAL" ? "border-ink" : "border-line hover:border-ink"} text-xs font-semibold text-ink`}>9:16 Reels/Shorts</button>
-          <button type="button" onClick={() => setReframeLabel("4:5 FEED")} className={`flex-1 py-2 rounded-xl bg-white border ${reframeLabel === "4:5 FEED" ? "border-ink" : "border-line hover:border-ink"} text-xs font-medium text-muted hover:text-ink`}>4:5 Feed</button>
-          <button type="button" onClick={() => setReframeLabel("1:1 SQUARE")} className={`flex-1 py-2 rounded-xl bg-white border ${reframeLabel === "1:1 SQUARE" ? "border-ink" : "border-line hover:border-ink"} text-xs font-medium text-muted hover:text-ink`}>1:1 Square</button>
+          <button type="button" onClick={() => setReframeLabel("9:16 VERTICAL")} className={`flex-1 py-2 rounded-xl bg-white border ${reframeLabel === "9:16 VERTICAL" ? "border-ink" : "border-line hover:border-ink"} text-xs font-semibold text-ink cursor-pointer`}>9:16 Reels/Shorts</button>
+          <button type="button" onClick={() => setReframeLabel("4:5 FEED")} className={`flex-1 py-2 rounded-xl bg-white border ${reframeLabel === "4:5 FEED" ? "border-ink" : "border-line hover:border-ink"} text-xs font-medium text-muted hover:text-ink cursor-pointer`}>4:5 Feed</button>
+          <button type="button" onClick={() => setReframeLabel("1:1 SQUARE")} className={`flex-1 py-2 rounded-xl bg-white border ${reframeLabel === "1:1 SQUARE" ? "border-ink" : "border-line hover:border-ink"} text-xs font-medium text-muted hover:text-ink cursor-pointer`}>1:1 Square</button>
         </div>
       </div>
     );
@@ -604,9 +480,9 @@ function ToolInteractiveWidget({ toolKey, toast }: { toolKey: string; toast: (ms
     <div className="p-4 rounded-2xl bg-canvas border border-line space-y-3">
       <div className="font-mono text-[10.5px] uppercase text-muted">Curated Motion Presets</div>
       <div className="grid grid-cols-3 gap-2">
-        <button type="button" onClick={() => toast("Applied Swiss Editorial preset")} className="p-2.5 rounded-xl bg-white border border-line hover:border-ink text-center text-[11px] font-semibold">Swiss Editorial</button>
-        <button type="button" onClick={() => toast("Applied Midnight Neon preset")} className="p-2.5 rounded-xl bg-ink text-white text-center text-[11px] font-semibold">Midnight Neon</button>
-        <button type="button" onClick={() => toast("Applied Film Grain 16mm preset")} className="p-2.5 rounded-xl bg-white border border-line hover:border-ink text-center text-[11px] font-semibold">Film 16mm</button>
+        <button type="button" onClick={() => toast("Applied Swiss Editorial preset")} className="p-2.5 rounded-xl bg-white border border-line hover:border-ink text-center text-[11px] font-semibold cursor-pointer">Swiss Editorial</button>
+        <button type="button" onClick={() => toast("Applied Midnight Neon preset")} className="p-2.5 rounded-xl bg-ink text-white text-center text-[11px] font-semibold cursor-pointer">Midnight Neon</button>
+        <button type="button" onClick={() => toast("Applied Film Grain 16mm preset")} className="p-2.5 rounded-xl bg-white border border-line hover:border-ink text-center text-[11px] font-semibold cursor-pointer">Film 16mm</button>
       </div>
     </div>
   );
@@ -741,7 +617,7 @@ function ActiveReelScene({
       {/* Right action rail */}
       <div className="absolute right-3 bottom-12 z-20 flex flex-col items-center gap-2.5">
         {/* Like */}
-        <button type="button" onClick={() => onToggleLike(reel.id)} className="flex flex-col items-center gap-0.5">
+        <button type="button" onClick={() => onToggleLike(reel.id)} className="flex flex-col items-center gap-0.5 cursor-pointer">
           <div className={`w-9 h-9 rounded-full bg-black/40 border border-white/15 flex items-center justify-center transition-transform active:scale-90 ${isLiked ? "text-rose-500" : "text-white"}`}>
             <svg className="w-4 h-4" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -751,7 +627,7 @@ function ActiveReelScene({
         </button>
 
         {/* Comment */}
-        <button type="button" onClick={() => toast(`${reel.comments} comments on ${reel.title}`)} className="flex flex-col items-center gap-0.5">
+        <button type="button" onClick={() => toast(`${reel.comments} comments on ${reel.title}`)} className="flex flex-col items-center gap-0.5 cursor-pointer">
           <div className="w-9 h-9 rounded-full bg-black/40 border border-white/15 flex items-center justify-center text-white hover:bg-black/55 transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -761,7 +637,7 @@ function ActiveReelScene({
         </button>
 
         {/* Save */}
-        <button type="button" onClick={() => onToggleSave(reel.id)} className="flex flex-col items-center gap-0.5">
+        <button type="button" onClick={() => onToggleSave(reel.id)} className="flex flex-col items-center gap-0.5 cursor-pointer">
           <div className={`w-9 h-9 rounded-full bg-black/40 border border-white/15 flex items-center justify-center transition-transform active:scale-90 ${isSaved ? "text-amber-400" : "text-white"}`}>
             <svg className="w-4 h-4" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -771,7 +647,7 @@ function ActiveReelScene({
         </button>
 
         {/* Share */}
-        <button type="button" onClick={() => toast("Reel link copied to clipboard")} className="flex flex-col items-center gap-0.5">
+        <button type="button" onClick={() => toast("Reel link copied to clipboard")} className="flex flex-col items-center gap-0.5 cursor-pointer">
           <div className="w-9 h-9 rounded-full bg-black/40 border border-white/15 flex items-center justify-center text-white hover:bg-black/55 transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -798,7 +674,7 @@ function ActiveReelScene({
           <button
             type="button"
             onClick={() => onToggleFollow(reel.id)}
-            className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all ${
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all cursor-pointer ${
               isFollowed ? "bg-white/20 text-white border border-white/30" : "bg-white text-ink hover:bg-neutral-200"
             }`}
           >
@@ -827,6 +703,18 @@ function ActiveReelScene({
 // ============================================================
 
 export default function ReetlixLanding() {
+  // Session State
+  const { data: session } = useSession();
+  const user = session?.user;
+  const userInitials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "CU";
+
   // State
   const [currentIndex, setCurrentIndex] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("cylinder");
@@ -839,7 +727,7 @@ export default function ReetlixLanding() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
 
-  // Modal state
+  // Modal state (pricing, demo, tool - fake auth modal removed)
   const [modalType, setModalType] = useState<ModalType>(null);
   const [activeToolKey, setActiveToolKey] = useState<string>("clipper");
 
@@ -1003,7 +891,6 @@ export default function ReetlixLanding() {
   }, [isToolsOpen]);
 
   // ---- MODAL HELPERS ----
-  const openAuth = useCallback(() => setModalType("auth"), []);
   const openDemo = useCallback(() => setModalType("demo"), []);
   const openPricing = useCallback(() => setModalType("pricing"), []);
   const openTool = useCallback((key: string) => {
@@ -1012,7 +899,7 @@ export default function ReetlixLanding() {
   }, []);
   const closeModal = useCallback(() => setModalType(null), []);
 
-  const modalMaxWidth = modalType === "pricing" ? "max-w-3xl" : modalType === "demo" ? "max-w-2xl" : "max-w-md";
+  const modalMaxWidth = modalType === "pricing" ? "max-w-3xl" : "max-w-2xl";
 
   // ---- Dynamic Island state ----
   const islandSyncing = isLoading;
@@ -1028,7 +915,7 @@ export default function ReetlixLanding() {
 
   // ---- RENDER ----
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-screen flex flex-col relative selection:bg-ink selection:text-white">
       {/* Background Grid */}
       <div className="fixed inset-0 architectural-grid pointer-events-none z-0" />
       <div className="fixed inset-0 grid-vignette pointer-events-none z-0" />
@@ -1037,7 +924,7 @@ export default function ReetlixLanding() {
       <header className="sticky top-0 z-50 w-full bg-[#FAFAFA]/82 backdrop-blur-xl border-b border-line/85">
         <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-12 h-16 sm:h-[72px] flex items-center justify-between gap-4">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2.5 shrink-0 group">
+          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
             <div className="w-8 h-8 rounded-[10px] bg-ink text-white flex items-center justify-center shadow-[0_6px_16px_-4px_rgba(10,10,10,0.35)] group-hover:scale-[1.03] transition-transform">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -1045,7 +932,7 @@ export default function ReetlixLanding() {
               </svg>
             </div>
             <span className="font-[family-name:var(--font-display)] font-bold text-[20px] tracking-[-0.045em] text-ink">Reelix</span>
-          </a>
+          </Link>
 
           {/* Desktop Nav */}
           <nav aria-label="Creator Tools Navigation" className="hidden md:flex items-center">
@@ -1062,7 +949,7 @@ export default function ReetlixLanding() {
                   onClick={() => setIsToolsOpen(!isToolsOpen)}
                   aria-expanded={isToolsOpen}
                   aria-haspopup="true"
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium text-ink bg-neutral-100/80 hover:bg-neutral-100 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium text-ink bg-neutral-100/80 hover:bg-neutral-100 transition-colors cursor-pointer"
                 >
                   <span>Tools</span>
                   <svg className={`w-3.5 h-3.5 text-muted transition-transform duration-300 ${isToolsOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -1086,7 +973,7 @@ export default function ReetlixLanding() {
                         key={tool.key}
                         type="button"
                         onClick={() => { closeToolsDropdown(); openTool(tool.key); }}
-                        className="group text-left p-3 rounded-xl hover:bg-canvas border border-transparent hover:border-line/80 transition-all duration-200 flex items-start gap-3 hover:-translate-y-[1px]"
+                        className="group text-left p-3 rounded-xl hover:bg-canvas border border-transparent hover:border-line/80 transition-all duration-200 flex items-start gap-3 hover:-translate-y-[1px] cursor-pointer"
                       >
                         <div className="w-9 h-9 rounded-xl bg-canvas border border-line/90 group-hover:bg-ink group-hover:text-white group-hover:border-ink text-ink flex items-center justify-center shrink-0 transition-colors">
                           <ToolIcon tool={tool.key} />
@@ -1120,25 +1007,90 @@ export default function ReetlixLanding() {
               <a href="#showcaseStage" className="px-3.5 py-1.5 rounded-full text-[13px] font-medium text-muted hover:text-ink hover:bg-neutral-50 transition-colors">
                 Showcase
               </a>
-              <button type="button" onClick={openDemo} className="px-3.5 py-1.5 rounded-full text-[13px] font-medium text-muted hover:text-ink hover:bg-neutral-50 transition-colors">
+              <button type="button" onClick={openDemo} className="px-3.5 py-1.5 rounded-full text-[13px] font-medium text-muted hover:text-ink hover:bg-neutral-50 transition-colors cursor-pointer">
                 Workflow
               </button>
             </div>
           </nav>
 
-          {/* Desktop right */}
-          <div className="hidden md:flex items-center gap-5 lg:gap-6 shrink-0">
-            <button type="button" onClick={openPricing} className="text-[13.5px] font-medium text-muted hover:text-ink transition-colors">Pricing</button>
-            <button type="button" onClick={openAuth} className="text-[13.5px] font-medium text-muted hover:text-ink transition-colors">Log in</button>
-            <button type="button" onClick={openAuth} className="btn-sheen px-5 py-2.5 rounded-full bg-ink text-white text-[13px] font-medium hover:bg-neutral-800 active:scale-[0.98] transition-all shadow-[0_8px_22px_-8px_rgba(10,10,10,0.45)]">
-              Sign up
+          {/* Desktop right: Real Session Aware */}
+          <div className="hidden md:flex items-center gap-4 lg:gap-5 shrink-0">
+            <button type="button" onClick={openPricing} className="text-[13.5px] font-medium text-muted hover:text-ink transition-colors cursor-pointer">
+              Pricing
             </button>
+
+            {user ? (
+              // LOGGED IN STATE
+              <>
+                <div className="flex items-center gap-2 p-1 pl-2 pr-3 rounded-full bg-white border border-line shadow-xs">
+                  {user.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={user.image}
+                      alt={user.name || "User"}
+                      className="w-6 h-6 rounded-full object-cover border border-line"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-ink text-white flex items-center justify-center text-[9px] font-bold">
+                      {userInitials}
+                    </div>
+                  )}
+                  <span className="text-[12px] font-semibold text-ink max-w-[120px] truncate">
+                    {user.name || user.email}
+                  </span>
+                </div>
+
+                <Link
+                  href="/studio"
+                  className="btn-sheen px-4 py-2 rounded-full bg-ink text-white text-[12.5px] font-medium hover:bg-neutral-800 active:scale-[0.98] transition-all shadow-sm"
+                >
+                  Studio
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="text-[13px] font-medium text-muted hover:text-ink transition-colors cursor-pointer"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              // LOGGED OUT STATE
+              <>
+                <Link
+                  href="/login"
+                  className="text-[13.5px] font-medium text-muted hover:text-ink transition-colors"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/studio"
+                  className="btn-sheen px-5 py-2.5 rounded-full bg-ink text-white text-[13px] font-medium hover:bg-neutral-800 active:scale-[0.98] transition-all shadow-[0_8px_22px_-8px_rgba(10,10,10,0.45)]"
+                >
+                  Open Studio
+                </Link>
+              </>
+            )}
           </div>
 
-          {/* Mobile */}
+          {/* Mobile Right */}
           <div className="flex md:hidden items-center gap-2">
-            <button type="button" onClick={openAuth} className="px-3.5 py-1.5 rounded-full bg-ink text-white text-[12px] font-medium">Sign up</button>
-            <button type="button" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle Menu" className="p-2 rounded-full border border-line bg-white text-ink">
+            {user ? (
+              <Link href="/studio" className="px-3.5 py-1.5 rounded-full bg-ink text-white text-[12px] font-medium">
+                Studio
+              </Link>
+            ) : (
+              <Link href="/studio" className="px-3.5 py-1.5 rounded-full bg-ink text-white text-[12px] font-medium">
+                Studio
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle Menu"
+              className="p-2 rounded-full border border-line bg-white text-ink cursor-pointer"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 12h16M4 17h16" />
               </svg>
@@ -1157,7 +1109,7 @@ export default function ReetlixLanding() {
                     key={tool.key}
                     type="button"
                     onClick={() => { setMobileMenuOpen(false); openTool(tool.key); }}
-                    className="p-2.5 rounded-xl bg-canvas border border-line text-left flex items-center gap-2 hover:border-ink/40"
+                    className="p-2.5 rounded-xl bg-canvas border border-line text-left flex items-center gap-2 hover:border-ink/40 cursor-pointer"
                   >
                     <span className="text-ink shrink-0"><ToolIcon tool={tool.key} /></span>
                     <span className="text-[12px] font-semibold text-ink truncate">{tool.name}</span>
@@ -1166,9 +1118,35 @@ export default function ReetlixLanding() {
               </div>
             </div>
             <div className="pt-4 border-t border-line flex items-center justify-between gap-3">
-              <button type="button" onClick={() => { setMobileMenuOpen(false); openPricing(); }} className="text-sm font-medium text-ink">Pricing</button>
-              <button type="button" onClick={() => { setMobileMenuOpen(false); openAuth(); }} className="text-sm font-medium text-muted">Log in</button>
-              <button type="button" onClick={() => { setMobileMenuOpen(false); openDemo(); }} className="text-sm font-medium text-muted">Workflow</button>
+              <button type="button" onClick={() => { setMobileMenuOpen(false); openPricing(); }} className="text-sm font-medium text-ink cursor-pointer">
+                Pricing
+              </button>
+              {user ? (
+                <>
+                  <Link href="/studio" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-ink">
+                    Studio
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => { setMobileMenuOpen(false); signOut({ callbackUrl: "/" }); }}
+                    className="text-sm font-medium text-muted cursor-pointer"
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/studio" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-ink">
+                    Studio
+                  </Link>
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-muted">
+                    Log in
+                  </Link>
+                  <button type="button" onClick={() => { setMobileMenuOpen(false); openDemo(); }} className="text-sm font-medium text-muted cursor-pointer">
+                    Workflow
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -1199,21 +1177,32 @@ export default function ReetlixLanding() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3.5 pt-1 lg:pointer-events-auto">
-              <button
-                type="button"
-                onClick={openAuth}
-                className="btn-sheen group inline-flex items-center gap-3 px-7 py-4 rounded-full bg-ink text-white text-[14.5px] font-medium hover:bg-neutral-800 active:scale-[0.98] transition-all shadow-[0_16px_36px_-12px_rgba(10,10,10,0.45)]"
-              >
-                <span>Get started free</span>
-                <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-6 6 6-6 6" />
-                </svg>
-              </button>
+              {user ? (
+                <Link
+                  href="/studio"
+                  className="btn-sheen group inline-flex items-center gap-3 px-7 py-4 rounded-full bg-ink text-white text-[14.5px] font-medium hover:bg-neutral-800 active:scale-[0.98] transition-all shadow-[0_16px_36px_-12px_rgba(10,10,10,0.45)]"
+                >
+                  <span>Open your Studio</span>
+                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-6 6 6-6 6" />
+                  </svg>
+                </Link>
+              ) : (
+                <Link
+                  href="/studio"
+                  className="btn-sheen group inline-flex items-center gap-3 px-7 py-4 rounded-full bg-ink text-white text-[14.5px] font-medium hover:bg-neutral-800 active:scale-[0.98] transition-all shadow-[0_16px_36px_-12px_rgba(10,10,10,0.45)]"
+                >
+                  <span>Get started free</span>
+                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-6 6 6-6 6" />
+                  </svg>
+                </Link>
+              )}
 
               <button
                 type="button"
                 onClick={openDemo}
-                className="inline-flex items-center gap-2.5 px-6 py-4 rounded-full bg-white/92 backdrop-blur-md text-ink text-[14.5px] font-medium border border-line hover:border-ink/40 hover:bg-white active:scale-[0.98] transition-all shadow-[0_4px_16px_-8px_rgba(10,10,14,0.12)]"
+                className="inline-flex items-center gap-2.5 px-6 py-4 rounded-full bg-white/92 backdrop-blur-md text-ink text-[14.5px] font-medium border border-line hover:border-ink/40 hover:bg-white active:scale-[0.98] transition-all shadow-[0_4px_16px_-8px_rgba(10,10,14,0.12)] cursor-pointer"
               >
                 <svg className="w-4 h-4 text-ink/80" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5.14v14l11-7-11-7z" />
@@ -1332,7 +1321,7 @@ export default function ReetlixLanding() {
 
                     {/* In-app header */}
                     <div className="absolute top-[42px] inset-x-0 z-30 px-4 flex items-center justify-between text-white">
-                      <button type="button" onClick={() => showToast("Preview mode active")} className="inline-flex items-center gap-1 px-2 py-[3.5px] rounded-full bg-white/12 hover:bg-white/20 backdrop-blur-md border border-white/18 text-[9px] font-mono font-semibold tracking-wider text-white/95 transition-colors" aria-label="HDR Camera Mode">
+                      <button type="button" onClick={() => showToast("Preview mode active")} className="inline-flex items-center gap-1 px-2 py-[3.5px] rounded-full bg-white/12 hover:bg-white/20 backdrop-blur-md border border-white/18 text-[9px] font-mono font-semibold tracking-wider text-white/95 transition-colors cursor-pointer" aria-label="HDR Camera Mode">
                         <svg className="w-2.5 h-2.5 text-white/90" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
@@ -1343,14 +1332,14 @@ export default function ReetlixLanding() {
                         <button
                           type="button"
                           onClick={() => { setActiveFeedTab("following"); nextReel(); showToast("Switched to Following feed"); }}
-                          className={`status-legible text-[11.5px] transition-colors pb-1 ${activeFeedTab === "following" ? "font-semibold text-white" : "font-medium text-white/65 hover:text-white/90"}`}
+                          className={`status-legible text-[11.5px] transition-colors pb-1 cursor-pointer ${activeFeedTab === "following" ? "font-semibold text-white" : "font-medium text-white/65 hover:text-white/90"}`}
                         >
                           Following
                         </button>
                         <button
                           type="button"
                           onClick={() => { setActiveFeedTab("foryou"); nextReel(); showToast("Switched to For You feed"); }}
-                          className={`status-legible text-[11.5px] transition-colors pb-1 ${activeFeedTab === "foryou" ? "font-semibold text-white" : "font-medium text-white/65 hover:text-white/90"}`}
+                          className={`status-legible text-[11.5px] transition-colors pb-1 cursor-pointer ${activeFeedTab === "foryou" ? "font-semibold text-white" : "font-medium text-white/65 hover:text-white/90"}`}
                         >
                           For You
                         </button>
@@ -1363,7 +1352,7 @@ export default function ReetlixLanding() {
                         />
                       </div>
 
-                      <button type="button" onClick={() => showToast("Search trending reels & audio")} aria-label="Search reels" className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/95 transition-colors">
+                      <button type="button" onClick={() => showToast("Search trending reels & audio")} aria-label="Search reels" className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/95 transition-colors cursor-pointer">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.1" viewBox="0 0 24 24">
                           <circle cx="11" cy="11" r="6.5" />
                           <path strokeLinecap="round" d="M16 16l4 4" />
@@ -1407,7 +1396,7 @@ export default function ReetlixLanding() {
 
               {/* Control pill */}
               <div className="mt-6 relative z-30 flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-white/92 backdrop-blur-md border border-line shadow-[0_8px_24px_-10px_rgba(10,10,14,0.14)]">
-                <button type="button" onClick={prevReel} aria-label="Previous reel" className="w-7 h-7 rounded-full flex items-center justify-center text-ink hover:bg-neutral-100 transition-colors">
+                <button type="button" onClick={prevReel} aria-label="Previous reel" className="w-7 h-7 rounded-full flex items-center justify-center text-ink hover:bg-neutral-100 transition-colors cursor-pointer">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 </button>
 
@@ -1415,7 +1404,7 @@ export default function ReetlixLanding() {
                   type="button"
                   onClick={() => setIsAutoplay(!isAutoplay)}
                   aria-label={isAutoplay ? "Pause" : "Play"}
-                  className="w-7 h-7 rounded-full flex items-center justify-center bg-ink text-white hover:bg-neutral-800 transition-colors"
+                  className="w-7 h-7 rounded-full flex items-center justify-center bg-ink text-white hover:bg-neutral-800 transition-colors cursor-pointer"
                 >
                   {isAutoplay ? (
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z" /></svg>
@@ -1424,7 +1413,7 @@ export default function ReetlixLanding() {
                   )}
                 </button>
 
-                <button type="button" onClick={nextReel} aria-label="Next reel" className="w-7 h-7 rounded-full flex items-center justify-center text-ink hover:bg-neutral-100 transition-colors">
+                <button type="button" onClick={nextReel} aria-label="Next reel" className="w-7 h-7 rounded-full flex items-center justify-center text-ink hover:bg-neutral-100 transition-colors cursor-pointer">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                 </button>
 
@@ -1438,7 +1427,7 @@ export default function ReetlixLanding() {
                       type="button"
                       onClick={() => selectReel(i)}
                       aria-label={`Jump to ${r.title}`}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${i === currentIndex ? "w-5 bg-ink" : "w-1.5 bg-neutral-300 hover:bg-neutral-500"}`}
+                      className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === currentIndex ? "w-5 bg-ink" : "w-1.5 bg-neutral-300 hover:bg-neutral-500"}`}
                     />
                   ))}
                 </div>
@@ -1450,14 +1439,14 @@ export default function ReetlixLanding() {
                   <button
                     type="button"
                     onClick={() => setViewMode("cylinder")}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${viewMode === "cylinder" ? "bg-white text-ink shadow-xs" : "text-muted hover:text-ink"}`}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer ${viewMode === "cylinder" ? "bg-white text-ink shadow-xs" : "text-muted hover:text-ink"}`}
                   >
                     Cylinder
                   </button>
                   <button
                     type="button"
                     onClick={() => setViewMode("stack")}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${viewMode === "stack" ? "bg-white text-ink shadow-xs" : "text-muted hover:text-ink"}`}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer ${viewMode === "stack" ? "bg-white text-ink shadow-xs" : "text-muted hover:text-ink"}`}
                   >
                     Stack
                   </button>
@@ -1505,9 +1494,14 @@ export default function ReetlixLanding() {
               <span>SATHACK 2026 Project</span>
             </div>
             <div className="flex items-center gap-5">
-              <button type="button" onClick={openPricing} className="hover:text-ink transition-colors">Pricing</button>
-              <button type="button" onClick={() => openTool("clipper")} className="hover:text-ink transition-colors">Tools</button>
-              <button type="button" onClick={openDemo} className="hover:text-ink transition-colors">Demo</button>
+              <button type="button" onClick={openPricing} className="hover:text-ink transition-colors cursor-pointer">Pricing</button>
+              <button type="button" onClick={() => openTool("clipper")} className="hover:text-ink transition-colors cursor-pointer">Tools</button>
+              <button type="button" onClick={openDemo} className="hover:text-ink transition-colors cursor-pointer">Demo</button>
+              {user ? (
+                <Link href="/studio" className="hover:text-ink transition-colors">Studio</Link>
+              ) : (
+                <Link href="/login" className="hover:text-ink transition-colors">Sign in</Link>
+              )}
             </div>
           </div>
         </footer>
@@ -1516,9 +1510,8 @@ export default function ReetlixLanding() {
       {/* ============ MODALS ============ */}
       <ModalRoot isOpen={modalType !== null} onClose={closeModal} maxWidth={modalMaxWidth}>
         {modalType === "pricing" && <PricingModal onClose={closeModal} toast={showToast} />}
-        {modalType === "auth" && <AuthModal onClose={closeModal} toast={showToast} />}
-        {modalType === "demo" && <DemoModal onClose={closeModal} onOpenAuth={openAuth} />}
-        {modalType === "tool" && <ToolModal toolKey={activeToolKey} onClose={closeModal} onOpenAuth={openAuth} toast={showToast} />}
+        {modalType === "demo" && <DemoModal onClose={closeModal} />}
+        {modalType === "tool" && <ToolModal toolKey={activeToolKey} onClose={closeModal} toast={showToast} />}
       </ModalRoot>
 
       {/* Toast */}
