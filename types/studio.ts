@@ -40,9 +40,9 @@ export interface SourceVideo {
 }
 
 export interface ClipAnalytics {
-  hookScore: number;
-  pacingScore: number;
-  clarityScore: number;
+  hookScore?: number | null;
+  pacingScore?: number | null;
+  clarityScore?: number | null;
   completionRate: string;
   dropoffNote: string;
   retentionPoints: number[];
@@ -57,9 +57,9 @@ export interface Clip {
   startSec: number;
   endSec: number;
   score: number;
-  hookScore: number;
-  pacingScore: number;
-  clarityScore: number;
+  hookScore?: number | null;
+  pacingScore?: number | null;
+  clarityScore?: number | null;
   completionRate: string;
   dropoffNote: string;
   retentionPoints: number[];

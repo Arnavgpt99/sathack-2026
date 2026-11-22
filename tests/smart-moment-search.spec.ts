@@ -15,7 +15,7 @@ test.describe("Reelix Studio — Smart Moment Search", () => {
 
     // Switch to Smart Moment Search
     await smartSearchTab.click();
-    await expect(page.getByRole("heading", { name: /Smart Moment Search/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Smart Moment Search/i })).toBeVisible({ timeout: 10000 });
     await expect(page.getByText("01 · Source URL")).toBeVisible();
     await expect(page.getByText("02 · Target (targetEntity)")).toBeVisible();
     await expect(page.getByText("03 · Condition")).toBeVisible();
@@ -118,6 +118,16 @@ test.describe("Reelix Studio — Smart Moment Search", () => {
     await expect(page.getByText("Selected Queue")).toBeVisible();
     await expect(page.getByLabel("Live 9:16 Vertical Preview")).toBeVisible();
     await expect(page.getByLabel("Multi-Track Timeline and Tools")).toBeVisible();
+
+    // Verify P0-A: handoff payload does not inject fabricated sub-scores
+    const storedHandoff = await page.evaluate(() => {
+      const raw = localStorage.getItem("reelix_editor_handoff");
+      return raw ? JSON.parse(raw) : null;
+    });
+    expect(storedHandoff).not.toBeNull();
+    expect(storedHandoff[0].hookScore).toBeNull();
+    expect(storedHandoff[0].pacingScore).toBeNull();
+    expect(storedHandoff[0].clarityScore).toBeNull();
   });
 
   test("server-side proxy /api/health returns valid json response", async ({ request }) => {

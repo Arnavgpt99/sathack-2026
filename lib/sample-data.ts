@@ -73,7 +73,7 @@ export function generateWaveform(seed: number, count = 72): number[] {
 export const SAMPLE_SOURCES: SourceVideo[] = [
   {
     id: "sample-yt",
-    url: "https://youtube.com/watch?v=reelix-keynote-2026",
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     title: "Building Products That Stick — Keynote",
     channel: "Design Systems Conf",
     platform: "YouTube",

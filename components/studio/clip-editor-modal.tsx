@@ -619,14 +619,14 @@ function ClipEditorModalInner({
               )}
             </div>
 
-            {/* Analytics Summary */}
+            {/* Model Assessment Summary */}
             <div className="p-4 rounded-2xl bg-canvas border border-line space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-mono text-[10.5px] uppercase tracking-wider text-muted">
-                  Clip Analytics
+                  Model Assessment
                 </span>
                 <span className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white border border-line text-ink">
-                  {clip.score}/100
+                  {clip.score ? `${clip.score}/100` : "Candidate"}
                 </span>
               </div>
 
@@ -634,19 +634,19 @@ function ClipEditorModalInner({
                 <div className="p-2 rounded-xl bg-white border border-line">
                   <div className="font-mono text-[10px] text-muted">Hook</div>
                   <div className="font-[family-name:var(--font-display)] font-bold text-[17px] text-ink">
-                    {clip.hookScore}
+                    {clip.hookScore != null ? clip.hookScore : "—"}
                   </div>
                 </div>
                 <div className="p-2 rounded-xl bg-white border border-line">
                   <div className="font-mono text-[10px] text-muted">Pacing</div>
                   <div className="font-[family-name:var(--font-display)] font-bold text-[17px] text-ink">
-                    {clip.pacingScore}
+                    {clip.pacingScore != null ? clip.pacingScore : "—"}
                   </div>
                 </div>
                 <div className="p-2 rounded-xl bg-white border border-line">
                   <div className="font-mono text-[10px] text-muted">Clarity</div>
                   <div className="font-[family-name:var(--font-display)] font-bold text-[17px] text-ink">
-                    {clip.clarityScore}
+                    {clip.clarityScore != null ? clip.clarityScore : "—"}
                   </div>
                 </div>
               </div>
@@ -655,19 +655,25 @@ function ClipEditorModalInner({
                 <p className="text-[11.5px] text-muted leading-snug">
                   {clip.dropoffNote}
                 </p>
-                <svg
-                  className="w-24 h-7 text-ink shrink-0"
-                  viewBox="0 0 100 28"
-                  fill="none"
-                >
-                  <polyline
-                    points={buildSparklineCoords(clip.retentionPoints)}
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                {clip.retentionPoints && clip.retentionPoints.length > 1 ? (
+                  <svg
+                    className="w-24 h-7 text-ink shrink-0"
+                    viewBox="0 0 100 28"
+                    fill="none"
+                  >
+                    <polyline
+                      points={buildSparklineCoords(clip.retentionPoints)}
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : (
+                  <span className="font-mono text-[9.5px] text-muted/70 italic text-right shrink-0">
+                    Retention curve available post-publish
+                  </span>
+                )}
               </div>
             </div>
 
